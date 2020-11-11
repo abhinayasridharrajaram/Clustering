@@ -1,0 +1,117 @@
+set.seed(1680) # for reproducibility
+
+library(dplyr) # for data cleaning
+library(ISLR) # for college dataset
+library(cluster) # for gower similarity and pam
+library(Rtsne) # for t-SNE plot
+library(ggplot2) # for visualization
+
+library(ISLR)
+library(cluster)
+library(reshape)
+library(fpc)
+data(College)
+head(College)
+library(rattle)
+library(ggpubr)
+# Basic density plot with mean line and marginal rug
+ggdensity(College, x UE)
+= "Enroll", 
+          fill = "#0073C2FF", color = "#0073C2FF",
+          add = "mean", rug = TR
+
+# Before clustering can begin, some data cleaning must be done {Select important variables for analysis Check and remove outliers,Standardize variables,Assess clusterability,Acceptance rate is created by dividing the number of acceptances by the number of applications,}isElite is created by labeling colleges with more than 50% of their new students who were in the top 10% of their high school class as elite
+
+attach(College)
+College$Accept_rate= Apps/Accept
+College$IsElite= ifelse(College$Top10perc>50, "Elite", "Not_Elite")
+college_clean= sqldf("Select Accept_rate, Outstate,  Enroll, Private, IsElite,Grad.Rate from College")
+
+summary(gower_dist)
+
+pamk.gow <- pamk(gower_dist, diss=TRUE, krange=1:10, 
+                 criterion='asw', critout=TRUE)
+# 3 Clusters can be chosen based on higher silhoutte width
+
+# Visualizing optimum number of clusters 
+df_pamk <- melt(pamk.gow$crit)
+df_pamk$index <- rownames(df_pamk)
+plot3 <- ggplot(df_pamk, aes(x=index, y=value)) +
+  geom_bar(stat='identity', fill='steelblue') + 
+  scale_x_discrete(limits=c(1:10)) +
+  ggtitle('Silhouette Width Criterion\nMedoid + Gower Distance') +
+  labs(x='Number of clusters k', y='Average silhouette width criterion value')
+
+plot3
+
+# Cluster Intepretation
+
+pam_fit <- pam(gower_dist, diss = TRUE, k = 3)
+pam_fit$clustering
+
+
+pam_fit<-pam(gower_dist,diss = TRUE, k = 3)
+pam_fit$clustering
+
+#PAMFit CLustering
+
+
+pam_fit<-pam(gower_dist,diss = TRUE, k = 3)
+pam_fit<-pam(gower_dist,diss = TRUE, k = 3)
+college_clean$cluster= pam_fit$clustering
+head(college_clean)
+
+#Cluster 1 Summary {Characteristics of Cluster 1:
+Private Colleges that are not Elite
+Out of State Tuition is Medium
+Small levels of Enrollment
+}
+
+cluster1 = college_clean%>%filter(cluster==1)
+summary(cluster1)
+
+
+#Cluster 2 Summary {Small number of Elite institutes
+Lower Accept rate and high graduation rates
+Mostly Private
+High Outstate and high grad rates
+}
+
+cluster2 = college_clean%>%filter(cluster==2)
+summary(cluster2)
+
+#Cluster 3 summary
+cluster2 = college_clean%>%filter(cluster==3)
+summary(cluster2)
+
+#Characteristics of Cluster 3
+
+#Characteristics of Cluster 3 {Large number of public not elite institutions
+High  levels of enrollment low outstate tuition
+Low graduation rate}
+
+
+#Projection of CLusters in A vIsual FOrmal using a Dimensionality Reduction Technique called Distributed stochastic neighbor embedding or TSNE. This is similar in some aspects to Principal Component Analysis (PCA), used to visualize N variables into 2.
+
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+tsne_obj$Y= data.frame(tsne_obj$Y)
+names(tsne_obj$Y)[names(tsne_obj$Y)=="X1"] <- "X"
+tsnobject= tsne_obj$Y
+names(tsne_obj$Y)[names(tsne_obj$Y)=="X2"] <- "Y"
+tsnobject= tsne_obj$Y
+tsnobject$cluster= as.factor(pam_fit$clustering)
+tsnobject$College_Name=college_clean$Name
+
+#Outlier Analysis
+
+exceptions= sqldf("Select * from tsnobject where X>25 and x<30")
+
+#This group is made up of the larger, more competitive public schools, like the University of Virginia or the University of California at Berkeley. 
+
+#While not large enough to warrant an additional cluster according to silhouette width, these 13 schools(pasted in previous slide) certainly have characteristics distinct from the other three clusters.
+
+ggplot(aes(x = X, y = Y), data = tsnobject) +
+    geom_point(aes(color = cluster))
+
+
+
